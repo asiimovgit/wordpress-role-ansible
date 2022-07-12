@@ -1,0 +1,88 @@
+---
+  
+  #handlers:
+  #   - name: Restarting apache to make sure
+  #     include_tasks: handlers.yaml   
+
+#  tasks:
+     - name: Including multiple vars for import of variables.
+       ansible.builtin.include_vars:
+         dir: vars
+         extensions:
+              - 'yaml'
+              - 'yml'  
+
+     - name: Installing dependencies for Ubuntu
+       ansible.builtin.apt:
+         name: '{{ item }}'
+         state: present
+       loop: '{{ dependency }}'  
+       when: ansible_facts['distribution'] == "Ubuntu"
+
+     - name: Creating database for wordpress
+       community.mysql.mysql_db:
+         login_user: 'root'
+         login_password: '{{ admin_secret }}'
+         login_host: 'localhost'
+         name: 'wordpress_db'
+         state: present     
+
+     - name: Creating Mysql user and granting privileges
+       community.mysql.mysql_user:
+         login_user: 'root'
+         login_password: '{{ admin_secret }}'
+         login_host: 'localhost'
+         name: 'wp_user'
+         password: '{{ user_secret }}'
+         priv: 'wordpress_db.*:ALL' 
+         state: present
+           
+     - name: Downloading wordpress files
+       ansible.builtin.shell:
+         cmd: 
+           wget https://wordpress.org/latest.tar.gz -O /var/www/html/wordpress.tar.gz
+     
+     - name: Preparing directories
+       file:
+         path: '{{ wp_root }}'
+         state: directory   
+
+     - name: Extracting wordpress files
+       ansible.builtin.unarchive:
+         src: /var/www/html/wordpress.tar.gz
+         dest: /var/www/html/
+         remote_src: yes
+
+     - name: Configuring wordpress 
+       ansible.builtin.shell: |     
+           cp '{{ wp_root }}/wp-config-sample.php' '{{ wp_root }}/wp-config.php'
+           sed -i 's/database_name_here/wordpress_db/' {{ wp_root }}/wp-config.php
+           sed -i 's/username_here/wp_user/' {{ wp_root }}/wp-config.php
+           sed -i 's/password_here/{{ user_secret }}/' {{ wp_root }}/wp-config.php
+       become: yes   
+
+     - name: Copying wordpress apache config powered by Jinja2
+       ansible.builtin.template:
+         src: 'templates/wordpress.config.j2'
+         dest: "{{ apache_conf }}/wordpress.conf"
+         owner: 'root'
+         group: 'root'
+         mode: '0644'
+       changed_when: true
+       #notify: Restarting apache to make sure
+       notify: Restarting apache2
+
+
+     - name: Recursively setting permission for wordpress directory
+       ansible.builtin.file:
+         path: "{{ wp_root }}"
+         state: directory
+         recurse: yes
+         owner: www-data
+         group: www-data
+
+               
+              
+         
+
+              
