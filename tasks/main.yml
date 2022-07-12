@@ -1,10 +1,5 @@
 ---
-  
-  #handlers:
-  #   - name: Restarting apache to make sure
-  #     include_tasks: handlers.yaml   
 
-#  tasks:
      - name: Including multiple vars for import of variables.
        ansible.builtin.include_vars:
          dir: vars
