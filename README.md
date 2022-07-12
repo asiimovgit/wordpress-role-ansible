@@ -1,4 +1,4 @@
-Wordpress
+Wordpress Role based deployment
 =========
 
 To deploy wordpress instance on remote machine.
