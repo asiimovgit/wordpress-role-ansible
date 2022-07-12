@@ -1,7 +1,7 @@
 Role Name
 =========
 
-A brief description of the role goes here.
+To deploy wordpress instance on remote machine.
 
 Requirements
 ------------
