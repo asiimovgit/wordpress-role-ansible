@@ -1,4 +1,4 @@
-Role Name
+Wordpress
 =========
 
 To deploy wordpress instance on remote machine.
